@@ -60,8 +60,19 @@ The project files could be flagged, and can get you banned If VAC detects you ar
 if (EnumDeviceDrivers(drivers, sizeof(drivers), &cbNeeded) && cbNeeded < sizeof(drivers))
 ```
 
+## A little Analysis of OverWatch
+I have purchased CSGO around April-May on a separate account, which you see in the sample videos.
+For 80+ hours I have been cheating on that account, for about a month or so. Revisited the game in August last time. I have used wallhack, triggerbot, aimbot without holding back and received countless reports from competetive matches. At this time being the account is still not banned for CSGO.
+
 ## Compilation
 You will need Visual Studio 2017 atleast, and amongs that the WDK. If you don't know how to compile a Kernel Driver, you will need to google a bit, or just [click here](https://guidedhacking.com/threads/windows-kernel-mode-driver-tutorial.15201/).
+
+## Updating offsets after a game update
+Don't be a loser, dump with [GH Dumper](https://guidedhacking.com/resources/guided-hacking-offset-dumper-gh-offset-dumper.51/)
+
+Use -insecure, and dump after.
+
+~~Visit [hazedumper](https://github.com/frk1/hazedumper) for easy usage.~~
 
 ## Supported Windows Versions
 If you don't need the csrss.exe check just remove It (memory.c, but not recommended), or update the offsets manually
@@ -92,16 +103,22 @@ Open up CMD as admin mode:
   # Create service and start it.
   sc create garhal type= kernel binpath="C:\Users...\Desktop\garhal.sys"
   sc start garhal
+  
+  # Stopping the service, bohoho...
+  sc stop garhal
+  
+  # Disabling testmode...
+  bcdedit /set testsigning off
 ```
 
 ## Manual mapping the driver instead of testmode
-1. Uncomment the commented DriverEntry function in garhal.c
-2. Rename the current one to DriverInitialize
-3. Compile the driver with /GS- (Disable the security check)
+1. Uncomment the commented DriverEntry function in garhal.c.
+2. Rename the current one to DriverInitialize.
+3. Compile the driver with /GS- (Disable the security check).
 [![IMAGE ALT TEXT HERE](https://i.imgur.com/iASLlHG.png)](https://i.imgur.com/iASLlHG.png)
-4. Use kdmapper or something else to load up your driver
-5. Optional: Clear the MmUnloadedDrivers and PIBCache yourself, don't use CreateDriver
-6. Reboot your PC to clear out the driver entirely from the memory if you want to play different games
+4. Use kdmapper or something else to load up your driver.
+5. **Optional (and recommended if you are interested in kernel, rather than being a crappy user):** Clear the MmUnloadedDrivers and PIBCache yourself, get the signature of these using WinDbg for example, don't use CreateDriver, hook an IOCTL function with a trick, or do some other type of communication. I'm not releasing practices for this for now, there is plenty available. If you manage to do these tricks you are free to attack any realistic anti-cheats with a bit of more work.
+6. Reboot your PC to clear out the driver entirely from the memory if you want to play different games.
 
 ## Preview
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/ADj12ykKq-o/0.jpg)](https://www.youtube.com/watch?v=ADj12ykKq-o)

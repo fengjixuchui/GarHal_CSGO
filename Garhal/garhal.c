@@ -11,14 +11,19 @@
 #include "communication.h"
 #include "events.h"
 #include "ntos.h"
-
+#include "gstructs.h"
 
 NTSTATUS UnloadDriver(PDRIVER_OBJECT pDriverObject)
 {
 	DebugMessageNormal("======================================\n");
 	DebugMessageNormal("Garhal CSGO External hack By DreTaX\n");
 	DebugMessageNormal("Shutting down...\n");
-	PsRemoveLoadImageNotifyRoutine(ImageLoadCallback);
+
+	if (!IsManualMapped) 
+	{
+		PsRemoveLoadImageNotifyRoutine(ImageLoadCallback);
+	}
+	
 	IoDeleteSymbolicLink(&dos);
 	IoDeleteDevice(pDriverObject->DeviceObject);
 
@@ -33,17 +38,6 @@ NTSTATUS UnloadDriver(PDRIVER_OBJECT pDriverObject)
 		OBRegisterHandle = NULL;
 	}
 
-	/*DebugMessageNormal("Attempting to free used memory.\n");
-	NTSTATUS status = FreeAllocatedMemory();
-	if (status == STATUS_SUCCESS)
-	{
-		DebugMessageNormal("FreeMemory Succeeded.\n");
-	}
-	else
-	{
-		DebugMessageNormal("FreeMemory Failed!\n");
-	}*/
-
 	DebugMessageNormal("Shutdown Complete!\n");
 
 	return STATUS_SUCCESS;
@@ -56,7 +50,10 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
 	DebugMessageNormal("Garhal CSGO External hack By DreTaX\n");
 	DebugMessageNormal("Starting...\n");
 
-	PsSetLoadImageNotifyRoutine(ImageLoadCallback);
+	if (!IsManualMapped) 
+	{
+		PsSetLoadImageNotifyRoutine(ImageLoadCallback);
+	}
 
 	RtlInitUnicodeString(&dev, L"\\Device\\garhalop");
 	RtlInitUnicodeString(&dos, L"\\DosDevices\\garhalop");
@@ -122,8 +119,8 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
 	return STATUS_SUCCESS;
 }
 
-/* Rename the current entry point to DriverInitialize to use this, and remove the unload call registration.
-NTSTATUS DriverEntry(
+// Rename the current entry point to DriverInitialize to use this, and remove the unload call registration.
+/*NTSTATUS DriverEntry(
 	_In_  struct _DRIVER_OBJECT* DriverObject,
 	_In_  PUNICODE_STRING RegistryPath
 	)
@@ -131,6 +128,8 @@ NTSTATUS DriverEntry(
 	// These parameters are invalid due to nonstandard way of loading and should not be used.
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNREFERENCED_PARAMETER(RegistryPath);
+
+	IsManualMapped = TRUE;
 
 	DebugMessageNormal("Garhal is swimming as a manual mapped driver, system range start is %p, code mapped at %p\n", MmSystemRangeStart, DriverEntry);
 
@@ -148,9 +147,9 @@ NTSTATUS DriverEntry(
 		DebugMessageNormal("Created driver.\n");
 	}
 
-	return STATUS_SUCCESS;
-}
-*/
+	return status;
+}*/
+
 
 NTSTATUS RegisterOBCallback()
 {
@@ -184,58 +183,4 @@ NTSTATUS RegisterOBCallback()
 	}
 
 	return Status;
-}
-
-// Todo: Continue.
-NTSTATUS FreeAllocatedMemory()
-{
-	try
-	{
-		if (csgoId)
-		{
-			MmFreeNonCachedMemory(csgoId, sizeof(csgoId));
-		}
-
-		if (ClientAddress)
-		{
-			MmFreeNonCachedMemory(ClientAddress, sizeof(ClientAddress));
-		}
-
-		if (EngineAddress)
-		{
-			MmFreeNonCachedMemory(EngineAddress, sizeof(EngineAddress));
-		}
-
-		if (ClientSize)
-		{
-			MmFreeNonCachedMemory(ClientSize, sizeof(ClientSize));
-		}
-
-		if (EngineSize)
-		{
-			MmFreeNonCachedMemory(EngineSize, sizeof(EngineSize));
-		}
-
-		if (ControllerID)
-		{
-			MmFreeNonCachedMemory(ControllerID, sizeof(ControllerID));
-		}
-
-		if (RankReaderID)
-		{
-			MmFreeNonCachedMemory(RankReaderID, sizeof(RankReaderID));
-		}
-
-		if (pDeviceObject)
-		{
-			MmFreeNonCachedMemory(pDeviceObject, sizeof(pDeviceObject));
-		}
-	}
-	except(EXCEPTION_EXECUTE_HANDLER)
-	{
-		return STATUS_UNSUCCESSFUL;
-	}
-
-
-	return STATUS_SUCCESS;
 }

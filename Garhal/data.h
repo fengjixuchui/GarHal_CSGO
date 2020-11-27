@@ -1,14 +1,14 @@
 #pragma once
 #include <ntifs.h>
+#include <windef.h>
 #include "vector.h"
 
-// Thanks Zeromem for the tuts, and Life45 for explaining.
-
 // We store every value here.
-ULONG csgoId, ClientAddress, EngineAddress, ClientSize, EngineSize, ControllerID, RankReaderID, ProtectController, ProtectRankReader;
+ULONG CsgoID, ClientAddress, EngineAddress, ClientSize, EngineSize, ControllerID, RankReaderID, ProtectController, ProtectRankReader;
 PDEVICE_OBJECT pDeviceObject;
 UNICODE_STRING dev, dos;
 vector CSRSSList;
+BOOLEAN IsManualMapped;
 
 
 // Constants

@@ -49,8 +49,8 @@ NTSTATUS IoControl(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			KeReadVirtualMemory(Process, ReadInput->Address, ReadInput->pBuff, ReadInput->Size);
 		}
 
-		//DbgPrintEx(0, 0, "Read Params:  %lu, %#010x \n", ReadInput->ProcessId, ReadInput->Address);
-		//DbgPrintEx(0, 0, "Value: %lu \n", ReadOutput->Response);
+		//DebugMessageNormal("Read Params:  %lu, %#010x \n", ReadInput->ProcessId, ReadInput->Address);
+		//DebugMessageNormal("Value: %lu \n", ReadOutput->Response);
 
 		Status = STATUS_SUCCESS;
 		BytesIO = sizeof(KERNEL_READ_REQUEST);
@@ -67,7 +67,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			KeWriteVirtualMemory(Process, WriteInput->pBuff, WriteInput->Address, WriteInput->Size);
 		}
 
-		//DbgPrintEx(0, 0, "Write Params:  %lu, %#010x \n", WriteInput->Value, WriteInput->Address);
+		//DebugMessageNormal("Write Params:  %lu, %#010x \n", WriteInput->Value, WriteInput->Address);
 
 		Status = STATUS_SUCCESS;
 		BytesIO = sizeof(KERNEL_WRITE_REQUEST);
@@ -75,9 +75,34 @@ NTSTATUS IoControl(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	else if (ControlCode == IO_GET_ID_REQUEST)
 	{
 		PULONG OutPut = (PULONG)Irp->AssociatedIrp.SystemBuffer;
-		*OutPut = csgoId;
 
-		DebugMessageNormal("A UserMode Application requested the ProcessID: %#010x \n", csgoId);
+		if (IsManualMapped)
+		{
+			vector processes;
+			vector_init(&processes);
+			FindProcessByName("csgo.exe", &processes);
+
+			// Did we find csgo?
+			if (vector_total(&processes) > 0)
+			{
+				// First should be good.
+				PEPROCESS proc = (PEPROCESS) vector_get(&processes, 0);
+				CsgoID = (ULONG) PsGetProcessId(proc);
+				
+				MODULEENTRY ClientEntry = GetProcessModule(proc, L"client.dll");
+				MODULEENTRY EngineEntry = GetProcessModule(proc, L"engine.dll");
+
+				ClientAddress = ClientEntry.Address;
+				EngineAddress = EngineEntry.Address;
+				ClientSize = ClientEntry.Size;
+				EngineSize = EngineEntry.Size;
+			}
+			vector_free(&processes);
+		}
+		
+		*OutPut = CsgoID;
+
+		DebugMessageNormal("A UserMode Application requested the ProcessID: %#010x \n", CsgoID);
 		Status = STATUS_SUCCESS;
 		BytesIO = sizeof(*OutPut);
 	}

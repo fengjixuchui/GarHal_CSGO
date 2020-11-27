@@ -9,18 +9,18 @@
 // Find our required PE image.
 PLOAD_IMAGE_NOTIFY_ROUTINE ImageLoadCallback(PUNICODE_STRING FullImageName, HANDLE ProcessId, PIMAGE_INFO ImageInfo)
 {
-	//DbgPrintEx(0, 0, "We received a load from: %ls \n", FullImageName->Buffer);
+	//DebugMessageNormal("We received a load from: %ls \n", FullImageName->Buffer);
 
 	// Compare our string to input
 	if (wcsstr(FullImageName->Buffer, L"\\csgo\\bin\\client.dll"))
 	{
 		DebugMessageNormal("CSGO client.dll found!\n");
 		DebugMessageNormal("Loaded Name: %ls \n", FullImageName->Buffer);
-		DebugMessageNormal("Loaded To Process: %d \n", ProcessId);
+		DebugMessageNormal("Loaded To Process: %d \n", (ULONG) ProcessId);
 
-		ClientAddress = ImageInfo->ImageBase;
-		ClientSize = ImageInfo->ImageSize;
-		csgoId = ProcessId;
+		ClientAddress = (ULONG) ImageInfo->ImageBase;
+		ClientSize = (ULONG) ImageInfo->ImageSize;
+		CsgoID = (ULONG) ProcessId;
 
 		// Free, and re-init the vector every time CSGO loads up.
 		vector_free(&CSRSSList);
@@ -34,8 +34,8 @@ PLOAD_IMAGE_NOTIFY_ROUTINE ImageLoadCallback(PUNICODE_STRING FullImageName, HAND
 	{
 		DebugMessageNormal("CSGO Engine.dll found!\n");
 
-		EngineAddress = ImageInfo->ImageBase;
-		EngineSize = ImageInfo->ImageSize;
+		EngineAddress = (ULONG) ImageInfo->ImageBase;
+		EngineSize = (ULONG) ImageInfo->ImageSize;
 	}
 
 	return STATUS_SUCCESS;
@@ -46,12 +46,12 @@ PCREATE_PROCESS_NOTIFY_ROUTINE_EX ProcessNotifyCallbackEx(HANDLE parentId, HANDL
 	// NotifyInfo is filled when a process is created. Otherwise terminated.
 	if (notifyInfo)
 	{
-		//DbgPrintEx(0, 0, "PID = %d\r\n", processId);
-		//DbgPrintEx(0, 0, "Process Full Path: %ls \n", notifyInfo->ImageFileName->Buffer);
+		//DebugMessageNormal("PID = %d\r\n", processId);
+		//DebugMessageNormal("Process Full Path: %ls \n", notifyInfo->ImageFileName->Buffer);
 		if (wcsstr(notifyInfo->ImageFileName->Buffer, L"\\GarhalController.exe"))
 		{
 			DebugMessageNormal("Bomb has been planted!\n");
-			ControllerID = processId;
+			ControllerID = (ULONG) processId;
 			DebugMessageNormal("Controller ProcessID: %d\r\n", ControllerID);
 
 			if (EnableProcessHiding == 1)
@@ -64,7 +64,7 @@ PCREATE_PROCESS_NOTIFY_ROUTINE_EX ProcessNotifyCallbackEx(HANDLE parentId, HANDL
 		}
 		else if (wcsstr(notifyInfo->ImageFileName->Buffer, L"\\GarhalRankDisplayer.exe"))
 		{
-			RankReaderID = processId;
+			RankReaderID = (ULONG) processId;
 			DebugMessageNormal("RankReaderID ProcessID: %d\r\n", RankReaderID);
 
 			if (EnableProcessHiding == 1)
@@ -78,7 +78,7 @@ PCREATE_PROCESS_NOTIFY_ROUTINE_EX ProcessNotifyCallbackEx(HANDLE parentId, HANDL
 	}
 	else
 	{
-		ULONG ProcID = (ULONG)processId;
+		ULONG ProcID = (ULONG) processId;
 		if (ControllerID == ProcID)
 		{
 			DebugMessageNormal("Controller Shutdown detected, disabling protection. %d\r\n", ControllerID);
@@ -91,10 +91,10 @@ PCREATE_PROCESS_NOTIFY_ROUTINE_EX ProcessNotifyCallbackEx(HANDLE parentId, HANDL
 			RankReaderID = 0;
 			ProtectRankReader = 0;
 		}
-		else if (csgoId == ProcID)
+		else if (CsgoID == ProcID)
 		{
-			DebugMessageNormal("CSGO Shutdown detected, zeroing addresses. %d\r\n", csgoId);
-			csgoId = 0;
+			DebugMessageNormal("CSGO Shutdown detected, zeroing addresses. %d\r\n", CsgoID);
+			CsgoID = 0;
 			ClientAddress = 0;
 			EngineAddress = 0;
 			ClientSize = 0;
@@ -116,7 +116,7 @@ PCREATE_PROCESS_NOTIFY_ROUTINE_EX ProcessNotifyCallbackEx(HANDLE parentId, HANDL
 OB_PREOP_CALLBACK_STATUS OBRegisterCallback(PVOID RegistrationContext, POB_PRE_OPERATION_INFORMATION OperationInformation)
 {
 	// Our controller or CSGO is not running yet.
-	if (ControllerID == 0 || csgoId == 0)
+	if (ControllerID == 0 || CsgoID == 0)
 	{
 		return OB_PREOP_SUCCESS;
 	}
@@ -143,7 +143,7 @@ OB_PREOP_CALLBACK_STATUS OBRegisterCallback(PVOID RegistrationContext, POB_PRE_O
 	}
 
 	// Ensure we don't fuck with CSGO.
-	if (csgoId == OpenedProcessID)
+	if (CsgoID == OpenedProcessID)
 	{
 		return OB_PREOP_SUCCESS;
 	}
